@@ -1,0 +1,3 @@
+# Tells the PopClip Directory which folders in this repo are extensions.
+# https://www.popclip.app/extensions/submit
+include: "*.popclipext"
