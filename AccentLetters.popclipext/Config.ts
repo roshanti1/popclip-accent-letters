@@ -36,9 +36,16 @@ const SPECIAL_RE = new RegExp(`[${Object.keys(SPECIAL).join("")}]`, "g");
  * The table runs AFTER the decomposition, never instead of it: ǣ decomposes to æ plus a macron,
  * and æ itself has no plain form, so it still has to become "ae".
  */
+// A combining mark is not always an accent. In Devanagari the virama is a mark, so क्षत्रिय became
+// कषतरय; in Thai the vowels are marks, so สวัสดี became สวสด; and ❤️ lost its variation selector.
+// So a character is only touched when its decomposition starts with a LATIN letter — everything
+// else is returned exactly as it came in.
+const LATIN = /\p{Script=Latin}/u;
+
 function stripChar(c: string): string {
-  const s = c.normalize("NFD").replace(/\p{M}/gu, "");
-  return s.replace(SPECIAL_RE, (x) => SPECIAL[x]);
+  const d = c.normalize("NFD");
+  if (!LATIN.test(d[0])) return c;
+  return d.replace(/\p{M}/gu, "").replace(SPECIAL_RE, (x) => SPECIAL[x]);
 }
 
 export function removeAccents(text: string): string {
@@ -82,6 +89,11 @@ export function test(): void {
     // Nothing outside the Latin script may be touched.
     ["日本語 plain 🎉", "日本語 plain 🎉"],
     ["", ""],
+    // A combining mark is not always an accent: these must come back untouched.
+    ["क्षत्रिय", "क्षत्रिय"],
+    ["สวัสดี", "สวัสดี"],
+    ["❤️", "❤️"],
+    ["Crème café ☕ में", "Creme cafe ☕ में"],
   ];
 
   let failed = 0;
